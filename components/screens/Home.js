@@ -25,9 +25,10 @@ import {observer} from 'mobx-react/native';
 @observer export default class Home extends Component{
    @observable token= '';
    @observable email='';
-   @observable page=1;
+//    @observable page=1;
    @observable result=20;
-   @observable seed=1;
+//    @observable seed=1;
+   @observable updatedSeed=0;
 
     static navigationOptions={
         header: null
@@ -37,6 +38,8 @@ import {observer} from 'mobx-react/native';
         loading: false,
         data: [],
         error: null,
+        page: 1,
+        seed: 1,
         refreshing: false
     } 
 
@@ -73,32 +76,40 @@ import {observer} from 'mobx-react/native';
     getCompleteFlatListData(token){
        // console.log(token);
         // const {page,seed} = this.state;
+        if(this.updatedSeed!==0)
+            this.seed=this.updatedSeed;
         console.log("TOKEN "+token);
         console.log(this.token);
-          getUserList(this.page,this.seed,this.result,token).then((res)=>{
-            console.log(res);
-            console.log(typeof res);
-            if(res.status===true)
-            {
-                //var listData=res.message;
-                console.log(res.message);
-              
-                var listData=JSON.parse(res.message.body);
-                console.log(listData.info);
-                console.log(listData.info.seed);
-                console.log(typeof listData.info.seed);
-                //console.log(listData.results);
-                console.log(typeof listData.results);
-                this.setState({
-                  data: [...this.state.data,...listData.results],
-                  error: res.error || null,
-                  loading: false,
-                  refreshing: false
-              });
-            }
-            console.log(this.state.data);
-    })
+        console.log(this.state.seed);
+        setTimeout(()=>{
+            getUserList(this.state.page,this.state.seed,this.result,token).then((res)=>{
+                console.log(res);
+                console.log(typeof res);
+                if(res.status===true)
+                {
+                    //var listData=res.message;
+                    console.log(res.message);
+                  
+                    var listData=JSON.parse(res.message.body);
+                    console.log(listData.info);
+                    console.log(listData.info.seed);
+                    console.log(typeof listData.info.seed);
+                    //console.log(listData.results);
+                  //  this.updatedSeed=parseInt(listData.info.seed);
+                    // AsyncStorage.setItem('seed',listData.info.seed)
+                    console.log(typeof listData.results);
+                    this.setState({
+                      data: [...this.state.data,...listData.results],
+                      error: res.error || null,
+                      loading: false,
+                      refreshing: false
+                  });
+                }
+                console.log(this.state.data);
+        })
+        },1500);
     }
+
     
     goToProfileDetail(){
        this.props.navigation.navigate('profile');
@@ -119,6 +130,38 @@ import {observer} from 'mobx-react/native';
 
                 </View>
         );
+        }
+
+        async handleRefresh(){
+           console.log('inside the handle refresh');
+           console.log(this.state.seed);
+           console.log(this.state.page);
+            // var tokenValue='';
+            //     await AsyncStorage.getItem('token')
+            //     .then((value)=>{  
+            //     // console.log(value);
+            //         tokenValue= value
+            //     });
+            //     this.setState({
+            //         page:1,
+            //         refreshing: true,
+            //         seed: this.state.seed+1
+            //     },()=>this.getCompleteFlatListData(tokenValue))
+        }
+
+       async handleLoadMore(){
+        console.log('inside the handle load more');
+        console.log(this.state.seed);
+        console.log(this.state.page);
+            var tokenValue='';
+                await AsyncStorage.getItem('token')
+                .then((value)=>{  
+                // console.log(value);
+                    tokenValue= value
+                });
+                this.setState({
+                    page:this.state.page+1,
+                },()=>this.getCompleteFlatListData(tokenValue))
         }
 
         renderSeparator = () => {
@@ -177,7 +220,8 @@ import {observer} from 'mobx-react/native';
                                     keyExtractor={item => item.email}
                                     ItemSeparatorComponent= {this.renderSeparator}
                                     ListFooterComponent = {this.renderFooter}
-
+                                    refreshing={this.state.refreshing}
+                                    onRefresh={this.handleRefresh}
                                 />
                             </List>
                         </View>
