@@ -23,94 +23,86 @@ import {observer} from 'mobx-react/native';
 
 
 @observer export default class Home extends Component{
-    @observable token= '';
+   @observable token= '';
+   @observable email='';
+   @observable page=1;
+   @observable result=20;
+   @observable seed=1;
+
     static navigationOptions={
         header: null
     };
 
-   
+    state={
+        loading: false,
+        data: [],
+        error: null,
+        refreshing: false
+    } 
 
     constructor(props){
         super(props);
-        this.state={
-            image : '',
-            email: '',
-            loading: false,
-            data: [],
-            page: 1,
-            seed: 1,
-            result: 20,
-            error: null,
-            refreshing: false
-        } 
-    }
-
-
-async getCompleteUserList(email){
-    console.log(email);
-    await AsyncStorage.getItem(email)
-    .then((value)=>{     
-        console.log(value);
-        var userInfo=JSON.parse(value);
-        console.log(userInfo);
-        this.setState({
-            image: userInfo.image,
-        })
-       }); 
-}
-    
-    goToProfileDetail(){
-        //alert('hello user');
-       this.props.navigation.navigate('profile');
-    }
-    async componentWillMount(){
-        await AsyncStorage.getItem('token')
-        .then((value)=>{     
-            console.log(value);
-            console.log(this.token);
-            this.token=value;
-            console.log("Token "+this.token);
+        AsyncStorage.getItem('token')
+        .then((value)=>{  
             var decoded=jwt_decode(value);
             console.log(decoded);
-            this.setState({
-                email: decoded.email
-            })
-          this.getCompleteUserList(this.state.email);
-           console.log(this.state.email);
-    })
-    console.log(this.token);
-        
-      }
-      componentDidMount()
-      {
-          const {page,seed} = this.state;
-          console.log("TOKEN "+this.token);
-          console.log(this.token);
-            getUserList(page,seed,this.state.result,this.token).then((res)=>{
-              console.log(res);
-              console.log(typeof res);
-              if(res.status===true)
-              {
-                  //var listData=res.message;
-                  console.log(res.message);
-                
-                  var listData=JSON.parse(res.message.body);
-                  //console.log(listData.results);
-                  console.log(typeof listData.results);
-                  this.setState({
-                    data: [...this.state.data,...listData.results],
-                    error: res.error || null,
-                    loading: false,
-                    refreshing: false
-                });
-              }
-              console.log(this.state.data);
-      })
+                this.token= value,
+                this.email= decoded.email,
+            console.log(this.email); 
+        this.getCompleteUserList(this.email);
+        });
     }
-   
-        renderHeader = () => {
-            return <SearchBar placeholder="Type Here..." lightTheme round />
-        }
+
+    async getCompleteUserList(email){
+        console.log('inside the get user list');
+        console.log(email);
+        await AsyncStorage.getItem(email)
+        .then((value)=>{     
+            console.log(value);
+            var userInfo=JSON.parse(value);
+            console.log(userInfo);
+            this.setState({
+                image: userInfo.image,
+            })
+           }); 
+           console.log(this.token);
+           this.getCompleteFlatListData(this.token);
+       // console.log(this.state.token);
+    }
+
+    getCompleteFlatListData(token){
+       // console.log(token);
+        // const {page,seed} = this.state;
+        console.log("TOKEN "+token);
+        console.log(this.token);
+          getUserList(this.page,this.seed,this.result,token).then((res)=>{
+            console.log(res);
+            console.log(typeof res);
+            if(res.status===true)
+            {
+                //var listData=res.message;
+                console.log(res.message);
+              
+                var listData=JSON.parse(res.message.body);
+                console.log(listData.info);
+                console.log(listData.info.seed);
+                console.log(typeof listData.info.seed);
+                //console.log(listData.results);
+                console.log(typeof listData.results);
+                this.setState({
+                  data: [...this.state.data,...listData.results],
+                  error: res.error || null,
+                  loading: false,
+                  refreshing: false
+              });
+            }
+            console.log(this.state.data);
+    })
+    }
+    
+    goToProfileDetail(){
+       this.props.navigation.navigate('profile');
+    }
 
         renderFooter = () => {
             if(!this.state.loading) return null;
@@ -141,6 +133,8 @@ async getCompleteUserList(email){
                 />
             );
         };
+
+
     render(){
        const { navigate } = this.props.navigation;
         return(
