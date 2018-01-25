@@ -18,16 +18,23 @@ import LinearGradient from 'react-native-linear-gradient';
 import { StackNavigator} from 'react-navigation';
 import { getUserList } from '../networkCalls/backend';
 import jwt_decode from "jwt-decode";
-export default class Home extends Component{
+import { observable } from 'mobx';
+import {observer} from 'mobx-react/native';
+
+
+@observer export default class Home extends Component{
+    @observable token= '';
     static navigationOptions={
         header: null
     };
+
+   
+
     constructor(props){
         super(props);
         this.state={
             image : '',
             email: '',
-            token: '',
             loading: false,
             data: [],
             page: 1,
@@ -60,29 +67,26 @@ async getCompleteUserList(email){
         await AsyncStorage.getItem('token')
         .then((value)=>{     
             console.log(value);
-            this.setState({
-                token: value
-            });
+            console.log(this.token);
+            this.token=value;
+            console.log("Token "+this.token);
             var decoded=jwt_decode(value);
             console.log(decoded);
             this.setState({
                 email: decoded.email
             })
           this.getCompleteUserList(this.state.email);
-         console.log(this.state.token);
-      //   token=this.state.tokenValue;
            console.log(this.state.email);
     })
-    console.log(this.state.token);
+    console.log(this.token);
         
       }
       componentDidMount()
       {
           const {page,seed} = this.state;
-          //const {token}=this.state;
-          console.log(this.state.token);
-       //   this.setState({loading:true});
-            getUserList(page,seed,this.state.result,this.state.token).then((res)=>{
+          console.log("TOKEN "+this.token);
+          console.log(this.token);
+            getUserList(page,seed,this.state.result,this.token).then((res)=>{
               console.log(res);
               console.log(typeof res);
               if(res.status===true)

@@ -76,6 +76,7 @@ export default class Profile extends Component{
     }
     saveUserData(name,password){
       //  alert(name+" "+password);
+      console.log(this.state.token);
         updateUserInfo(name,password,this.state.token).then((response)=>{
             console.log(response);
             if(response.status===true)
